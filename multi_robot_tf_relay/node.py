@@ -23,6 +23,8 @@ class FrameListener(Node):
         self.target_frame = self.declare_parameter(
           'target_frame', 'turtle1').get_parameter_value().string_value
         
+        self.get_logger().info(f'{self.target_frame}')
+
         self.tf_topics = self.get_robots_tf()
         self.get_logger().info(f'tf_topics : {self.tf_topics}')
 
@@ -35,7 +37,6 @@ class FrameListener(Node):
 
         for i in range(len(self.tf_topics)):
             robot = re.search(r"/turtle[0-9]*", self.tf_topics[i]).group()
-            # self.get_logger().info(f'TESTTTTTT : {robot}')
             self.tf_buffer_list.append(self.create_subscription(TFMessage, self.tf_topics[i] , self.tf_subscriber_callback, 10))
 
             # self.tf_listener_list.append(TransformListener(self.tf_buffer_list[i], self, namespace=robot))
@@ -43,16 +44,6 @@ class FrameListener(Node):
         self.get_logger().info(f'tf_listener_list : {self.tf_listener_list}')
         self.get_logger().info(f'tf_buffer_list : {self.tf_buffer_list}')
 
-        # Create a client to spawn a turtle
-        self.spawner = self.create_client(Spawn, 'spawn')
-        # Boolean values to store the information
-        # if the service for spawning turtle is available
-        self.turtle_spawning_service_ready = False
-        # if the turtle was successfully spawned
-        self.turtle_spawned = False
-
-        # Call on_timer function every second
-        self.timer = self.create_timer(0.1, self.on_timer)
     
     def get_robots_tf(self):
         """
@@ -72,6 +63,7 @@ class FrameListener(Node):
 
         return tf_topics
     
+
     def tf_subscriber_callback(self, msg):
         self.tf_msgs = msg
         tf_msg = TFMessage()
@@ -86,45 +78,6 @@ class FrameListener(Node):
         
         self.pub_tf.publish(tf_msg)
     
-
-    def on_timer(self):
-        # Store frame names in variables that will be used to
-        # compute transformations
-
-        if self.turtle_spawning_service_ready:
-            if self.turtle_spawned:
-                
-                #TODO: Add prefix on each robot's tf and publish everything on /tf
-                
-
-                # global_tf_msg = self.tf_msg
-                # global_tf_msg.child_frame_id = f'{self.tf_msg.transforms[0].header.frame_id}/{self.tf_msg.transforms[0].child_frame_id}' 
-                # self.pub_tf.publish(global_tf_msg)
-                pass
-
-
-            else:
-                if self.result.done():
-                    self.get_logger().info(
-                        f'Successfully spawned {self.result.result().name}')
-                    self.turtle_spawned = True
-                else:
-                    self.get_logger().info('Spawn is not finished')
-        else:
-            if self.spawner.service_is_ready():
-                # Initialize request with turtle name and coordinates
-                # Note that x, y and theta are defined as floats in turtlesim/srv/Spawn
-                request = Spawn.Request()
-                request.name = 'turtle2'
-                request.x = float(4)
-                request.y = float(2)
-                request.theta = float(0)
-                # Call request
-                self.result = self.spawner.call_async(request)
-                self.turtle_spawning_service_ready = True
-            else:
-                # Check if the service is ready
-                self.get_logger().info('Service is not ready')
 
 
 def main():
